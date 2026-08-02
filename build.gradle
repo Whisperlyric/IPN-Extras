@@ -58,6 +58,6 @@ tasks.register('buildAndGather') {
 	}
 }
 
-tasks.withType(JavaCompile) {
-	options.compilerArgs << '-Xlint:-processing'
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs << '-Xlint:-processing'
 }

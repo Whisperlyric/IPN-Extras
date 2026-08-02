@@ -5,14 +5,11 @@ import dev.whisperlyric.ipnextras.GcaContainerDetector;
 import dev.whisperlyric.ipnextras.IpnExtrasClient;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.world.inventory.AbstractContainerMenu;
 import org.anti_ad.mc.ipnext.inventory.ItemArea;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,6 +35,7 @@ public class InnerActionsMixin {
         return target;
     }
 
+    @Unique
     private static void filterSlotsForGca(ItemArea target) {
         try {
             Minecraft client = Minecraft.getInstance();
