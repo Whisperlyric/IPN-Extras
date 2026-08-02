@@ -1,0 +1,86 @@
+// Determine which loom plugin to use based on MC version
+def mcVersion = project.name
+def isLegacyVersion = mcVersion.startsWith("1.20") || mcVersion.startsWith("1.21")
+
+if (isLegacyVersion) {
+    apply plugin: "net.fabricmc.fabric-loom-remap"
+} else {
+    apply plugin: "net.fabricmc.fabric-loom"
+}
+
+apply plugin: 'com.replaymod.preprocess'
+
+repositories {
+    maven { url "https://api.modrinth.com/maven" }
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    if (!mcVersion.startsWith("26")) {
+        mappings loom.officialMojangMappings()
+    }
+    if (mcVersion.startsWith("26")) {
+        implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+        implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+    } else {
+        modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+        modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+    }
+
+    compileOnly "maven.modrinth:inventory-profiles-next:${project.ipn_version}"
+}
+
+java {
+    sourceCompatibility = JavaVersion.toVersion(project.java_version)
+    targetCompatibility = JavaVersion.toVersion(project.java_version)
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = "UTF-8"
+}
+
+jar {
+    archiveBaseName = "ipnextras"
+    archiveVersion = "fabric${mcVersion}-${project.mod_version}"
+    archiveClassifier = ""
+}
+
+if (mcVersion.startsWith("26")) {
+    // 26.1 unbundled, no remap needed
+} else {
+    remapJar {
+        archiveBaseName = "ipnextras"
+        archiveVersion = "fabric${mcVersion}-${project.mod_version}"
+        archiveClassifier = ""
+    }
+}
+
+afterEvaluate {
+    println "[${mcVersion}] Preprocess tasks: ${tasks.names.findAll { it.toLowerCase().contains('preprocess') || it.toLowerCase().contains('setcore') }}"
+    println "[${mcVersion}] Source dirs: ${sourceSets.main.java.srcDirs}"
+
+    // Non-main subprojects: ensure main project's compileJava runs before preprocessCode
+    // (fixes Gradle 9.4 cross-project configuration resolution lock)
+    def mainProjectName = rootProject.file('versions/mainProject').text.trim()
+    if (project.name != mainProjectName) {
+        tasks.matching { it.name == 'preprocessCode' }.configureEach {
+            def mainCompile = rootProject.project(":${mainProjectName}").tasks.named('compileJava')
+            dependsOn(mainCompile)
+        }
+    }
+}
+
+// Process resources to replace variables
+processResources {
+    inputs.property "version", project.mod_version
+    inputs.property "minecraft_range", project.minecraft_range
+    inputs.property "java_version", project.java_version
+    inputs.property "loader_version", project.loader_version
+    
+    filesMatching("fabric.mod.json") {
+        expand "version": project.mod_version,
+               "minecraft_range": project.minecraft_range,
+               "java_version": project.java_version,
+               "loader_version": project.loader_version
+    }
+}

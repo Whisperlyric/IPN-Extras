@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "package": "dev.whisperlyric.ipnextras.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "client": [
+    "InnerActionsMixin",
+    "ItemAreaAccessor"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

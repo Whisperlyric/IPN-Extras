@@ -1,0 +1,63 @@
+plugins {
+	id 'maven-publish'
+	id 'fabric-loom' version '1.16-SNAPSHOT' apply false
+
+	// ReplayMod Preprocessor
+	id 'com.replaymod.preprocess' version 'c5abb4fb12'
+}
+
+preprocess {
+	println "[Preprocessor] Configuring preprocess block..."
+	strictExtraMappings = false
+
+	// Specify main project (otherwise preprocessor won't know which project is the base)
+	mainProjectFile = "versions/mainProject"
+
+	// Create version nodes (MC version format: 1_20_01 for 1.20.1)
+	def mc12001 = createNode('1.20.1', 1_20_01, '')
+	def mc12005 = createNode('1.20.5', 1_20_05, '')
+	def mc12101 = createNode('1.21.1', 1_21_01, '')
+	def mc260100 = createNode('26.1', 26_01_00, '')
+	println "[Preprocessor] Created nodes: ${getNodes().size()}"
+
+	// Link versions with mapping files
+	mc12001.link(mc12005, file('versions/mapping-1.20.1-1.20.5.txt'))
+	mc12005.link(mc12101, file('versions/mapping-1.20.5-1.21.1.txt'))
+	mc12101.link(mc260100, file('versions/mapping-1.21.1-26.1.txt'))
+	println "[Preprocessor] Linked nodes"
+
+	// Set mcVersion for each project
+	for (final def node in getNodes()) {
+		println "[Preprocessor] Node: ${node.project}, mcVersion: ${node.mcVersion}"
+		findProject(node.project).ext.mcVersion = node.mcVersion
+	}
+}
+
+tasks.register('buildAndGather') {
+	subprojects {
+		dependsOn project.tasks.named('build').get()
+	}
+	doFirst {
+		println 'Gathering builds'
+		def buildLibs = {
+			p -> p.buildDir.toPath().resolve('libs')
+		}
+		delete fileTree(buildLibs(rootProject)) {
+			include '*'
+		}
+		subprojects {
+			copy {
+				from(buildLibs(project)) {
+					include '*.jar'
+					exclude '*-dev.jar', '*-sources.jar', '*-shadow.jar'
+				}
+				into buildLibs(rootProject)
+				duplicatesStrategy = DuplicatesStrategy.INCLUDE
+			}
+		}
+	}
+}
+
+tasks.withType(JavaCompile) {
+	options.compilerArgs << '-Xlint:-processing'
+}

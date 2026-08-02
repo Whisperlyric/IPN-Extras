@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "id": "ipnextras",
+  "version": "${version}",
+  "name": "IPN Extras",
+  "description": "Enhances IPN compatibility with GCA fake player containers by restricting sorting to valid slots",
+  "authors": ["WhisperLyric"],
+  "contact": {
+    "homepage": "https://github.com/Whisperlyric/IPN-Extras",
+    "sources": "https://github.com/Whisperlyric/IPN-Extras",
+    "issues": "https://github.com/Whisperlyric/IPN-Extras/issues"
+  },
+  "license": "MIT",
+  "environment": "client",
+  "entrypoints": {
+    "client": ["dev.whisperlyric.ipnextras.IpnExtrasClient"]
+  },
+  "mixins": [
+    "ipnextras.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "minecraft": "${minecraft_range}",
+    "java": ">=${java_version}",
+    "fabric-api": "*"
+  },
+  "recommends": {
+    "inventoryprofilesnext": "*"
+  }
+}
